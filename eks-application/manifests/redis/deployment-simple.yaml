@@ -1,0 +1,97 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-redis
+  namespace: todo-app
+  labels:
+    app: todo-redis
+    version: v1
+    component: redis
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-redis
+  template:
+    metadata:
+      labels:
+        app: todo-redis
+        version: v1
+        component: redis
+    spec:
+      serviceAccountName: todo-redis-sa
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+          protocol: TCP
+        command:
+        - redis-server
+        - --appendonly
+        - "yes"
+        - --maxmemory
+        - "256mb"
+        - --maxmemory-policy
+        - "allkeys-lru"
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        volumeMounts:
+        - name: redis-data
+          mountPath: /data
+      volumes:
+      - name: redis-data
+        emptyDir: {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-redis-service
+  namespace: todo-app
+  labels:
+    app: todo-redis
+    component: redis
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    targetPort: 6379
+    protocol: TCP
+    name: redis
+  selector:
+    app: todo-redis
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-redis-sa
+  namespace: todo-app
+  labels:
+    app: todo-redis
+    component: redis

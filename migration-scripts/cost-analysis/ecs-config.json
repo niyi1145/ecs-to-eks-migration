@@ -1,0 +1,43 @@
+{
+  "services": {
+    "todo-backend": {
+      "cpu": 512,
+      "memory": 1024,
+      "desired_count": 2
+    },
+    "todo-frontend": {
+      "cpu": 256,
+      "memory": 512,
+      "desired_count": 2
+    },
+    "todo-database": {
+      "cpu": 512,
+      "memory": 1024,
+      "desired_count": 1
+    },
+    "todo-redis": {
+      "cpu": 256,
+      "memory": 512,
+      "desired_count": 1
+    }
+  },
+  "load_balancer": {
+    "type": "alb",
+    "estimated_lcu": 2
+  },
+  "storage": {
+    "efs": {
+      "size_gb": 100,
+      "throughput_mibps": 100
+    }
+  },
+  "networking": {
+    "nat_gateway": {
+      "enabled": true,
+      "count": 2
+    }
+  },
+  "data_transfer": {
+    "monthly_gb": 100
+  }
+}

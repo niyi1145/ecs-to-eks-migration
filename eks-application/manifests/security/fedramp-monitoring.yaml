@@ -1,0 +1,105 @@
+# FedRAMP Compliance Monitoring and Audit
+# This file implements monitoring and audit controls for FedRAMP compliance
+
+---
+# ConfigMap for audit logging configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fedramp-audit-config
+  namespace: kube-system
+  labels:
+    compliance: fedramp
+    security: audit
+data:
+  audit-policy.yaml: |
+    apiVersion: audit.k8s.io/v1
+    kind: Policy
+    rules:
+    - level: Metadata
+      namespaces: ["kube-system"]
+    - level: RequestResponse
+      resources:
+      - group: ""
+        resources: ["secrets", "configmaps"]
+    - level: Request
+      resources:
+      - group: ""
+        resources: ["pods", "services", "deployments"]
+    - level: Metadata
+      omitStages:
+      - RequestReceived
+
+---
+# ServiceAccount for audit logging
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: fedramp-audit-sa
+  namespace: kube-system
+  labels:
+    compliance: fedramp
+    security: audit
+
+---
+# ClusterRole for audit logging
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: fedramp-audit-role
+  labels:
+    compliance: fedramp
+    security: audit
+rules:
+- apiGroups: [""]
+  resources: ["events"]
+  verbs: ["get", "list", "watch"]
+- apiGroups: [""]
+  resources: ["pods", "services", "deployments"]
+  verbs: ["get", "list", "watch"]
+
+---
+# ClusterRoleBinding for audit logging
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: fedramp-audit-binding
+  labels:
+    compliance: fedramp
+    security: audit
+roleRef:
+  kind: ClusterRole
+  name: fedramp-audit-role
+  apiGroup: rbac.authorization.k8s.io
+subjects:
+- kind: ServiceAccount
+  name: fedramp-audit-sa
+  namespace: kube-system
+
+---
+# Pod Security Policy for monitoring
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: fedramp-monitoring-psp
+  labels:
+    compliance: fedramp
+    security: monitoring
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'

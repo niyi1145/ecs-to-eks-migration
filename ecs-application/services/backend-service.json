@@ -1,0 +1,59 @@
+{
+  "serviceName": "todo-backend-service",
+  "cluster": "todo-cluster",
+  "taskDefinition": "todo-backend",
+  "desiredCount": 2,
+  "launchType": "FARGATE",
+  "platformVersion": "LATEST",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-xxxxxxxxx",
+        "subnet-yyyyyyyyy"
+      ],
+      "securityGroups": [
+        "sg-xxxxxxxxx"
+      ],
+      "assignPublicIp": "ENABLED"
+    }
+  },
+  "loadBalancers": [
+    {
+      "targetGroupArn": "arn:aws:elasticloadbalancing:REGION:ACCOUNT_ID:targetgroup/todo-backend-tg/xxxxxxxxx",
+      "containerName": "todo-backend",
+      "containerPort": 3000
+    }
+  ],
+  "serviceRegistries": [
+    {
+      "registryArn": "arn:aws:servicediscovery:REGION:ACCOUNT_ID:service/srv-xxxxxxxxx",
+      "containerName": "todo-backend",
+      "containerPort": 3000
+    }
+  ],
+  "deploymentConfiguration": {
+    "maximumPercent": 200,
+    "minimumHealthyPercent": 50,
+    "deploymentCircuitBreaker": {
+      "enable": true,
+      "rollback": true
+    }
+  },
+  "healthCheckGracePeriodSeconds": 60,
+  "enableExecuteCommand": true,
+  "enableLogging": true,
+  "tags": [
+    {
+      "key": "Project",
+      "value": "ECS-to-EKS-Migration"
+    },
+    {
+      "key": "Service",
+      "value": "todo-backend"
+    },
+    {
+      "key": "Environment",
+      "value": "production"
+    }
+  ]
+}

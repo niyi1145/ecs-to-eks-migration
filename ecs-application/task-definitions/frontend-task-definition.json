@@ -1,0 +1,65 @@
+{
+  "family": "todo-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "todo-frontend",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/todo-frontend:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "REACT_APP_API_URL",
+          "value": "https://api.todo-app.example.com"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/todo-frontend",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 30
+      },
+      "stopTimeout": 30
+    }
+  ],
+  "tags": [
+    {
+      "key": "Project",
+      "value": "ECS-to-EKS-Migration"
+    },
+    {
+      "key": "Service",
+      "value": "todo-frontend"
+    },
+    {
+      "key": "Environment",
+      "value": "production"
+    }
+  ]
+}

@@ -1,0 +1,51 @@
+{
+  "name": "todo-frontend",
+  "version": "1.0.0",
+  "description": "Todo List Frontend for ECS to EKS Migration",
+  "main": "index.js",
+  "scripts": {
+    "start": "react-scripts start",
+    "build": "react-scripts build",
+    "test": "react-scripts test",
+    "eject": "react-scripts eject",
+    "serve": "serve -s build -l 3000"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-scripts": "5.0.1",
+    "axios": "^1.4.0",
+    "react-router-dom": "^6.11.0",
+    "react-query": "^3.39.3",
+    "react-hook-form": "^7.44.3",
+    "react-hot-toast": "^2.4.1",
+    "date-fns": "^2.30.0",
+    "lucide-react": "^0.263.1"
+  },
+  "devDependencies": {
+    "serve": "^14.2.0"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "keywords": [
+    "react",
+    "todo",
+    "frontend",
+    "ecs",
+    "eks",
+    "migration"
+  ],
+  "author": "ECS to EKS Migration Project",
+  "license": "MIT",
+  "proxy": "http://localhost:3001"
+}

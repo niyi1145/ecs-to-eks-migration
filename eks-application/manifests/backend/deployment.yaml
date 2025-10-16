@@ -1,0 +1,174 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-backend
+  namespace: todo-app
+  labels:
+    app: todo-backend
+    version: v1
+    component: backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-backend
+  template:
+    metadata:
+      labels:
+        app: todo-backend
+        version: v1
+        component: backend
+    spec:
+      serviceAccountName: todo-backend-sa
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 1001
+      #   runAsGroup: 1001
+      #   fsGroup: 1001
+      containers:
+      - name: todo-backend
+        image: nginx:alpine
+        ports:
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: PORT
+          value: "80"
+        - name: JWT_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: jwt-secret
+        - name: DB_HOST
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: db-host
+        - name: DB_PORT
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: db-port
+        - name: DB_NAME
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: db-name
+        - name: DB_USER
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: db-user
+        - name: DB_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: db-password
+        - name: REDIS_HOST
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: redis-host
+        - name: REDIS_PORT
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: redis-port
+        - name: FRONTEND_URL
+          valueFrom:
+            secretKeyRef:
+              name: todo-backend-secrets
+              key: frontend-url
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "200m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 80
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        # securityContext:
+        #   allowPrivilegeEscalation: false
+        #   runAsNonRoot: true
+        #   runAsUser: 101
+        #   runAsGroup: 101
+        #   capabilities:
+        #     drop:
+        #     - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /app/.cache
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-backend-service
+  namespace: todo-app
+  labels:
+    app: todo-backend
+    component: backend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 80
+    protocol: TCP
+    name: http
+  selector:
+    app: todo-backend
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-backend-sa
+  namespace: todo-app
+  labels:
+    app: todo-backend
+    component: backend
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: todo-backend-secrets
+  namespace: todo-app
+  labels:
+    app: todo-backend
+    component: backend
+type: Opaque
+data:
+  jwt-secret: eW91ci1qd3Qtc2VjcmV0LWtleS1jaGFuZ2UtaW4tcHJvZHVjdGlvbg==
+  db-host: dG9kby1kYXRhYmFzZS1zZXJ2aWNl
+  db-port: NTQzMg==
+  db-name: dG9kb2FwcA==
+  db-user: cG9zdGdyZXM=
+  db-password: cGFzc3dvcmQ=
+  redis-host: dG9kby1yZWRpcy1zZXJ2aWNl
+  redis-port: NjM3OQ==
+  frontend-url: aHR0cHM6Ly9hcGkudG9kby1hcHAuZXhhbXBsZS5jb20=

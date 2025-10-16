@@ -1,0 +1,125 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-frontend
+  namespace: todo-app
+  labels:
+    app: todo-frontend
+    version: v1
+    component: frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: todo-frontend
+  template:
+    metadata:
+      labels:
+        app: todo-frontend
+        version: v1
+        component: frontend
+    spec:
+      serviceAccountName: todo-frontend-sa
+      # securityContext:
+      #   runAsNonRoot: true
+      #   runAsUser: 101
+      #   runAsGroup: 101
+      #   fsGroup: 101
+      containers:
+      - name: todo-frontend
+        image: python:3.9-alpine
+        ports:
+        - containerPort: 8000
+          name: http
+          protocol: TCP
+        command: ["python", "-m", "http.server", "8000"]
+        env:
+        - name: NODE_ENV
+          value: "production"
+        - name: REACT_APP_API_URL
+          valueFrom:
+            secretKeyRef:
+              name: todo-frontend-secrets
+              key: api-url
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "50m"
+          limits:
+            memory: "128Mi"
+            cpu: "100m"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8000
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 101
+          capabilities:
+            drop:
+            - ALL
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /var/cache/nginx
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
+      restartPolicy: Always
+      terminationGracePeriodSeconds: 30
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: todo-frontend-service
+  namespace: todo-app
+  labels:
+    app: todo-frontend
+    component: frontend
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8000
+    targetPort: 8000
+    protocol: TCP
+    name: http
+  selector:
+    app: todo-frontend
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: todo-frontend-sa
+  namespace: todo-app
+  labels:
+    app: todo-frontend
+    component: frontend
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: todo-frontend-secrets
+  namespace: todo-app
+  labels:
+    app: todo-frontend
+    component: frontend
+type: Opaque
+data:
+  api-url: aHR0cHM6Ly9hcGkudG9kby1hcHAuZXhhbXBsZS5jb20=

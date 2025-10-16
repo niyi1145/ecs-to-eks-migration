@@ -1,0 +1,52 @@
+{
+  "serviceName": "todo-redis-service",
+  "cluster": "todo-cluster",
+  "taskDefinition": "todo-redis",
+  "desiredCount": 1,
+  "launchType": "FARGATE",
+  "platformVersion": "LATEST",
+  "networkConfiguration": {
+    "awsvpcConfiguration": {
+      "subnets": [
+        "subnet-xxxxxxxxx",
+        "subnet-yyyyyyyyy"
+      ],
+      "securityGroups": [
+        "sg-xxxxxxxxx"
+      ],
+      "assignPublicIp": "DISABLED"
+    }
+  },
+  "serviceRegistries": [
+    {
+      "registryArn": "arn:aws:servicediscovery:REGION:ACCOUNT_ID:service/srv-xxxxxxxxx",
+      "containerName": "redis",
+      "containerPort": 6379
+    }
+  ],
+  "deploymentConfiguration": {
+    "maximumPercent": 100,
+    "minimumHealthyPercent": 0,
+    "deploymentCircuitBreaker": {
+      "enable": true,
+      "rollback": true
+    }
+  },
+  "healthCheckGracePeriodSeconds": 30,
+  "enableExecuteCommand": true,
+  "enableLogging": true,
+  "tags": [
+    {
+      "key": "Project",
+      "value": "ECS-to-EKS-Migration"
+    },
+    {
+      "key": "Service",
+      "value": "todo-redis"
+    },
+    {
+      "key": "Environment",
+      "value": "production"
+    }
+  ]
+}

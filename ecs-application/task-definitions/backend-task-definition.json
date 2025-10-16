@@ -1,0 +1,110 @@
+{
+  "family": "todo-backend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "512",
+  "memory": "1024",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "todo-backend",
+      "image": "ACCOUNT_ID.dkr.ecr.REGION.amazonaws.com/todo-backend:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "essential": true,
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "name": "PORT",
+          "value": "3000"
+        },
+        {
+          "name": "JWT_SECRET",
+          "value": "your-jwt-secret-key-change-in-production"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "DB_HOST",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/db/host"
+        },
+        {
+          "name": "DB_PORT",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/db/port"
+        },
+        {
+          "name": "DB_NAME",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/db/name"
+        },
+        {
+          "name": "DB_USER",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/db/user"
+        },
+        {
+          "name": "DB_PASSWORD",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/db/password"
+        },
+        {
+          "name": "REDIS_HOST",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/redis/host"
+        },
+        {
+          "name": "REDIS_PORT",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/redis/port"
+        },
+        {
+          "name": "FRONTEND_URL",
+          "valueFrom": "arn:aws:ssm:REGION:ACCOUNT_ID:parameter/todo-app/frontend/url"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/todo-backend",
+          "awslogs-region": "REGION",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": [
+          "CMD-SHELL",
+          "curl -f http://localhost:3000/health || exit 1"
+        ],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "stopTimeout": 30,
+      "ulimits": [
+        {
+          "name": "nofile",
+          "softLimit": 65536,
+          "hardLimit": 65536
+        }
+      ]
+    }
+  ],
+  "tags": [
+    {
+      "key": "Project",
+      "value": "ECS-to-EKS-Migration"
+    },
+    {
+      "key": "Service",
+      "value": "todo-backend"
+    },
+    {
+      "key": "Environment",
+      "value": "production"
+    }
+  ]
+}
